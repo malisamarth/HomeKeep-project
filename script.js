@@ -1,117 +1,297 @@
+
+/* ==========================================
+   HOMEKEEP 2.0
+   Frontend Application Logic
+   Firebase backend remains unchanged
+========================================== */
+
 const ICONS = {
-  HVAC:'🌬️', Plumbing:'🚿', Electrical:'⚡', Safety:'🔥',
-  Exterior:'🌿', Appliances:'🍽️', Structural:'🏠', Other:'🔧'
+  HVAC: "🌬️",
+  Plumbing: "🚿",
+  Electrical: "⚡",
+  Safety: "🔥",
+  Exterior: "🌿",
+  Appliances: "🍽️",
+  Structural: "🏠",
+  Other: "🔧"
 };
 
 const FREQ_LABELS = {
-  30:'Monthly',
-  90:'Every 3 months',
-  180:'Every 6 months',
-  365:'Annually'
+  30: "Monthly",
+  90: "Every 3 months",
+  180: "Every 6 months",
+  365: "Annually"
 };
 
 let tasks = [];
-let currentFilter = 'all';
+let currentFilter = "all";
+let isLoading = false;
+let toastTimeout = null;
 
-function getDaysUntilDue(last, freq) {
-  const due = new Date(last);
-  due.setDate(due.getDate() + parseInt(freq));
-  return Math.round((due - new Date()) / 86400000);
+// ==========================================
+// DATE UTILITIES
+// ==========================================
+
+function parseLocalDate(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
-function getStatus(days) {
-  if (days < 0) return 'overdue';
-  if (days <= 7) return 'upcoming';  // 🔥 tighter range
-  return 'good';
+function formatDate(value) {
+  if (!value) return "—";
+
+  const date = parseLocalDate(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
+function toDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function getDueDate(last, freq) {
-  const d = new Date(last);
-  d.setDate(d.getDate() + parseInt(freq));
-  return d.toISOString().split('T')[0];
+  const due = parseLocalDate(last);
+  due.setDate(due.getDate() + Number(freq));
+
+  return toDateInputValue(due);
 }
 
-function formatDate(str) {
-  return new Date(str).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-}
-
-// ✅ FIXED markDone
-async function markDone(id) {
+function getDaysUntilDue(last, freq) {
+  const due = parseLocalDate(getDueDate(last, freq));
   const today = new Date();
 
-  // 🔥 subtract 1 day so it becomes "good"
-  const adjustedDate = new Date(today);
-  adjustedDate.setDate(adjustedDate.getDate() - 1);
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
 
-  const formatted = adjustedDate.toISOString().split('T')[0];
-
-  await window.firebaseFns.updateDoc(
-    window.firebaseFns.doc(window.db, "tasks", id),
-    { last: formatted }
-  );
-
-  await loadTasksFromFirebase();
-  showToast('Task marked as done!');
+  return Math.round((due - today) / 86400000);
 }
 
-// ✅ DELETE
-async function deleteTask(id) {
-  if (!confirm("Delete this task?")) return;
-
-  await window.firebaseFns.deleteDoc(
-    window.firebaseFns.doc(window.db, "tasks", id)
-  );
-
-  await loadTasksFromFirebase();
-  showToast("Task deleted!");
+function getStatus(days) {
+  if (days < 0) return "overdue";
+  if (days <= 7) return "upcoming";
+  return "good";
 }
 
-// ✅ RENDER
-function renderTasks(filter) {
-  const grid = document.getElementById('taskGrid');
-  grid.innerHTML = '';
+function getStatusDetails(status, days) {
+  const details = {
+    overdue: {
+      label: `${Math.abs(days)}d overdue`,
+      pill: "pill-red",
+      iconBg: "bg-red"
+    },
+    upcoming: {
+      label: days === 0 ? "Due today" : `Due in ${days}d`,
+      pill: "pill-yellow",
+      iconBg: "bg-yellow"
+    },
+    good: {
+      label: "Up to date",
+      pill: "pill-green",
+      iconBg: "bg-green"
+    }
+  };
 
-  const filtered = tasks.filter(t =>
-    filter === 'all' || getStatus(getDaysUntilDue(t.last, t.freq)) === filter
+  return details[status];
+}
+
+// ==========================================
+// SAFE HTML RENDERING
+// ==========================================
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+// ==========================================
+// DASHBOARD STATISTICS
+// ==========================================
+
+function animateCounter(element, target) {
+  if (!element) return;
+
+  const duration = 700;
+  const startTime = performance.now();
+
+  function update(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    element.textContent = Math.round(target * eased);
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+function updateDashboard() {
+  const total = tasks.length;
+
+  let overdue = 0;
+  let upcoming = 0;
+  let good = 0;
+
+  tasks.forEach(task => {
+    const days = getDaysUntilDue(task.last, task.freq);
+    const status = getStatus(days);
+
+    if (status === "overdue") overdue++;
+    if (status === "upcoming") upcoming++;
+    if (status === "good") good++;
+  });
+
+  animateCounter(
+    document.getElementById("totalTasks"),
+    total
   );
 
-  if (!filtered.length) {
-    grid.innerHTML = '<p style="color:var(--muted);padding:48px;text-align:center">No tasks 🎉</p>';
+  animateCounter(
+    document.getElementById("overdueTasks"),
+    overdue
+  );
+
+  animateCounter(
+    document.getElementById("upcomingTasks"),
+    upcoming
+  );
+
+  animateCounter(
+    document.getElementById("goodTasks"),
+    good
+  );
+}
+
+// ==========================================
+// TASK FILTERING
+// ==========================================
+
+function getFilteredTasks() {
+  const searchValue =
+    document.getElementById("searchInput")?.value
+      .trim()
+      .toLowerCase() || "";
+
+  const categoryValue =
+    document.getElementById("categoryFilter")?.value || "all";
+
+  const statusValue =
+    document.getElementById("statusFilter")?.value || "all";
+
+  return tasks.filter(task => {
+    const days = getDaysUntilDue(task.last, task.freq);
+    const status = getStatus(days);
+
+    const matchesSearch =
+      task.name.toLowerCase().includes(searchValue) ||
+      task.cat.toLowerCase().includes(searchValue) ||
+      (task.notes || "").toLowerCase().includes(searchValue);
+
+    const matchesCategory =
+      categoryValue === "all" ||
+      task.cat === categoryValue;
+
+    const matchesStatus =
+      statusValue === "all" ||
+      status === statusValue;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+}
+
+// ==========================================
+// TASK RENDERING
+// ==========================================
+
+function renderTasks() {
+  const grid = document.getElementById("taskGrid");
+  const filtered = getFilteredTasks();
+
+  grid.innerHTML = "";
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div>🏡</div>
+        <h3>No tasks found</h3>
+        <p>Try changing your filters or add a new maintenance task.</p>
+      </div>
+    `;
+
     return;
   }
 
-  filtered.forEach(t => {
-    const days = getDaysUntilDue(t.last, t.freq);
+  filtered.forEach((task, index) => {
+    const days = getDaysUntilDue(task.last, task.freq);
     const status = getStatus(days);
+    const config = getStatusDetails(status, days);
 
-    const cfg = {
-      overdue:  { pill:'pill-red', iconBg:'bg-red', label:`${Math.abs(days)}d overdue`, btnColor:'#e87e7e' },
-      upcoming: { pill:'pill-yellow', iconBg:'bg-yellow', label:`Due in ${days}d`, btnColor:'#e8c97e' },
-      good:     { pill:'pill-green', iconBg:'bg-green', label:'Up to date', btnColor:'#7ec99a' },
-    }[status];
-
-    const card = document.createElement('div');
+    const card = document.createElement("article");
     card.className = `task-card ${status}`;
+    card.style.animationDelay = `${Math.min(index * 0.06, 0.4)}s`;
+
+    const taskName = escapeHTML(task.name);
+    const category = escapeHTML(task.cat);
+    const notes = escapeHTML(task.notes || "");
+    const id = escapeHTML(task.id);
+    const dueDate = formatDate(getDueDate(task.last, task.freq));
+    const lastDate = formatDate(task.last);
+
+    const icon = ICONS[task.cat] || ICONS.Other;
+    const frequency = FREQ_LABELS[task.freq] || "Custom";
 
     card.innerHTML = `
-      <div class="task-icon ${cfg.iconBg}">${ICONS[t.cat]}</div>
-      <div class="task-name">${t.name}</div>
-      <div class="task-desc">${t.cat} · ${FREQ_LABELS[t.freq]}</div>
+      <div class="task-icon ${config.iconBg}">
+        ${icon}
+      </div>
+
+      <div class="task-name">${taskName}</div>
+
+      <div class="task-desc">
+        ${category} · ${frequency}
+      </div>
+
+      ${notes ? `<p class="task-desc">${notes}</p>` : ""}
 
       <div class="task-meta">
         <div>
-          <span>Due date</span>
-          <strong>${formatDate(getDueDate(t.last, t.freq))}</strong>
+          <span>Next due</span>
+          <strong>${dueDate}</strong>
         </div>
-        <span class="status-pill ${cfg.pill}">${cfg.label}</span>
+
+        <span class="status-pill ${config.pill}">
+          ${config.label}
+        </span>
       </div>
 
-      <div style="display:flex; gap:8px; margin-top:14px;">
-        ${status !== 'good'
-          ? `<button onclick="markDone('${t.id}')">Done ✓</button>`
-          : ''
-        }
-        <button onclick="deleteTask('${t.id}')">Delete 🗑️</button>
+      <div class="task-actions">
+        <button
+          onclick="markDone('${id}')"
+          ${status === "good" ? "disabled" : ""}
+        >
+          ✓ Mark Done
+        </button>
+
+        <button onclick="deleteTask('${id}')">
+          Delete
+        </button>
       </div>
     `;
 
@@ -119,90 +299,295 @@ function renderTasks(filter) {
   });
 }
 
-// ✅ LOG
+// ==========================================
+// ACTIVITY LOG
+// ==========================================
+
 function renderLog() {
-  const body = document.getElementById('logBody');
-  body.innerHTML = '';
+  const body = document.getElementById("logBody");
 
-  tasks.forEach(t => {
-    body.innerHTML += `
+  body.innerHTML = "";
+
+  if (tasks.length === 0) {
+    body.innerHTML = `
       <tr>
-        <td>${t.name}</td>
-        <td>${t.cat}</td>
-        <td>${formatDate(t.last)}</td>
-        <td>${formatDate(getDueDate(t.last, t.freq))}</td>
-        <td>${t.notes || '-'}</td>
-      </tr>`;
+        <td colspan="6" style="text-align:center;color:var(--muted);padding:35px">
+          No maintenance activity yet.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  const sortedTasks = [...tasks].sort(
+    (a, b) => b.last.localeCompare(a.last)
+  );
+
+  sortedTasks.forEach(task => {
+    const days = getDaysUntilDue(task.last, task.freq);
+    const status = getStatus(days);
+    const config = getStatusDetails(status, days);
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td><strong>${escapeHTML(task.name)}</strong></td>
+      <td>${escapeHTML(task.cat)}</td>
+      <td>${formatDate(task.last)}</td>
+      <td>${formatDate(getDueDate(task.last, task.freq))}</td>
+      <td>${escapeHTML(task.notes || "—")}</td>
+      <td>
+        <span class="status-pill ${config.pill}">
+          ${config.label}
+        </span>
+      </td>
+    `;
+
+    body.appendChild(row);
   });
 }
 
-// ✅ ADD TASK
-async function addTask() {
-  const name = document.getElementById('taskName').value.trim();
-  if (!name) return alert("Enter task name");
+// ==========================================
+// RENDER ALL
+// ==========================================
 
-  const newTask = {
-    name,
-    cat: document.getElementById('taskCat').value,
-    last: document.getElementById('taskLast').value || new Date().toISOString().split('T')[0],
-    freq: parseInt(document.getElementById('taskFreq').value),
-    notes: document.getElementById('taskNotes').value
-  };
-
-  await window.firebaseFns.addDoc(
-    window.firebaseFns.collection(window.db, "tasks"),
-    newTask
-  );
-
-  await loadTasksFromFirebase();
-  closeModal();
-  showToast("Task added!");
-}
-
-// ✅ LOAD FROM FIREBASE
-async function loadTasksFromFirebase() {
-  const snapshot = await window.firebaseFns.getDocs(
-    window.firebaseFns.collection(window.db, "tasks")
-  );
-
-  tasks = [];
-
-  snapshot.forEach(docItem => {
-    tasks.push({
-      id: docItem.id,
-      ...docItem.data()
-    });
-  });
-
-  renderTasks('all');
+function renderApp() {
+  updateDashboard();
+  renderTasks();
   renderLog();
 }
 
-// ✅ TOAST
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+// ==========================================
+// FIREBASE: LOAD TASKS
+// ==========================================
+
+async function loadTasksFromFirebase() {
+  if (isLoading) return;
+
+  if (!window.db || !window.firebaseFns) {
+    console.error("Firebase is not initialized.");
+    return;
+  }
+
+  isLoading = true;
+
+  try {
+    const snapshot = await window.firebaseFns.getDocs(
+      window.firebaseFns.collection(window.db, "tasks")
+    );
+
+    tasks = [];
+
+    snapshot.forEach(document => {
+      const data = document.data();
+
+      if (
+        data.name &&
+        data.cat &&
+        data.last &&
+        Number.isFinite(Number(data.freq))
+      ) {
+        tasks.push({
+          id: document.id,
+          ...data,
+          freq: Number(data.freq)
+        });
+      }
+    });
+
+    renderApp();
+
+  } catch (error) {
+    console.error("Error loading tasks:", error);
+    showToast("Unable to load tasks. Check Firebase permissions.");
+  } finally {
+    isLoading = false;
+  }
 }
 
-// ✅ WAIT FOR FIREBASE
-window.addEventListener("firebaseReady", () => {
-  loadTasksFromFirebase();
-});
+// ==========================================
+// FIREBASE: ADD TASK
+// ==========================================
+
+async function addTask() {
+  const name = document.getElementById("taskName").value.trim();
+
+  const cat = document.getElementById("taskCat").value;
+
+  const last =
+    document.getElementById("taskLast").value ||
+    toDateInputValue(new Date());
+
+  const freq = Number(
+    document.getElementById("taskFreq").value
+  );
+
+  const notes =
+    document.getElementById("taskNotes").value.trim();
+
+  if (!name) {
+    alert("Please enter a task name.");
+    return;
+  }
+
+  if (!parseLocalDate(last) || !Number.isFinite(freq)) {
+    alert("Please enter valid task details.");
+    return;
+  }
+
+  const saveButton = document.querySelector(".modal-footer .primary-btn");
+
+  if (saveButton) saveButton.disabled = true;
+
+  try {
+    await window.firebaseFns.addDoc(
+      window.firebaseFns.collection(window.db, "tasks"),
+      {
+        name,
+        cat,
+        last,
+        freq,
+        notes
+      }
+    );
+
+    closeModal();
+
+    document.getElementById("taskName").value = "";
+    document.getElementById("taskNotes").value = "";
+
+    await loadTasksFromFirebase();
+
+    showToast("Maintenance task added successfully!");
+
+  } catch (error) {
+    console.error("Error adding task:", error);
+    showToast("Unable to add task. Please try again.");
+  } finally {
+    if (saveButton) saveButton.disabled = false;
+  }
+}
+
+// ==========================================
+// FIREBASE: MARK DONE
+// ==========================================
+
+async function markDone(id) {
+  try {
+    await window.firebaseFns.updateDoc(
+      window.firebaseFns.doc(window.db, "tasks", id),
+      {
+        last: toDateInputValue(new Date())
+      }
+    );
+
+    await loadTasksFromFirebase();
+
+    showToast("Task marked as completed!");
+
+  } catch (error) {
+    console.error("Error updating task:", error);
+    showToast("Unable to update task.");
+  }
+}
+
+// ==========================================
+// FIREBASE: DELETE TASK
+// ==========================================
+
+async function deleteTask(id) {
+  const confirmed = confirm(
+    "Are you sure you want to delete this maintenance task?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await window.firebaseFns.deleteDoc(
+      window.firebaseFns.doc(window.db, "tasks", id)
+    );
+
+    await loadTasksFromFirebase();
+
+    showToast("Task deleted successfully!");
+
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    showToast("Unable to delete task.");
+  }
+}
+
+// ==========================================
+// MODAL
+// ==========================================
 
 function openModal() {
-  document.getElementById('modalOverlay').classList.add('open');
-  document.getElementById('taskLast').value =
-    new Date().toISOString().split('T')[0];
+  document.getElementById("modalOverlay").classList.add("open");
+
+  document.getElementById("taskLast").value =
+    toDateInputValue(new Date());
+
+  document.getElementById("taskName").focus();
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById("modalOverlay").classList.remove("open");
 }
 
-function closeModalOutside(e) {
-  if (e.target === document.getElementById('modalOverlay')) {
+function closeModalOutside(event) {
+  if (event.target.id === "modalOverlay") {
     closeModal();
   }
+}
+
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  const toastMessage = document.getElementById("toastMsg");
+
+  toastMessage.textContent = message;
+
+  toast.classList.add("show");
+
+  clearTimeout(toastTimeout);
+
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+// ==========================================
+// EVENT LISTENERS
+// ==========================================
+
+function initializeApp() {
+  const searchInput = document.getElementById("searchInput");
+  const categoryFilter = document.getElementById("categoryFilter");
+  const statusFilter = document.getElementById("statusFilter");
+
+  searchInput.addEventListener("input", renderTasks);
+  categoryFilter.addEventListener("change", renderTasks);
+  statusFilter.addEventListener("change", renderTasks);
+
+  // Keyboard shortcut: Escape closes modal
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+  });
+
+  // Load Firebase data
+  loadTasksFromFirebase();
+}
+
+// Firebase module dispatches this event after initialization.
+window.addEventListener("firebaseReady", initializeApp);
+
+// Fallback if Firebase is already ready.
+if (window.db && window.firebaseFns) {
+  initializeApp();
 }

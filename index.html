@@ -1,135 +1,296 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HomeKeep — Maintenance Log</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10131a">
 
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <title>HomeKeep — Home Maintenance</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header>
-  <div class="logo">Home<span>Keep</span></div>
-  <div class="header-nav">
-    <button class="btn btn-ghost">📊 Reports</button>
-    <button class="btn btn-ghost">🔔 Reminders</button>
-    <button class="btn btn-primary" onclick="openModal()">+ Add Task</button>
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">H</div>
+        <span>HomeKeep</span>
+      </div>
+
+      <div class="sidebar-label">WORKSPACE</div>
+
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active">
+          <span>▦</span> Dashboard
+        </a>
+
+        <a href="#tasks" class="nav-item">
+          <span>✓</span> Maintenance Tasks
+        </a>
+
+        <a href="#activity" class="nav-item">
+          <span>◷</span> Activity Log
+        </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="help-card">
+          <div>🏠</div>
+          <strong>Take care of your home</strong>
+          <p>Stay ahead of maintenance and prevent costly repairs.</p>
+        </div>
+
+        <div class="profile">
+          <div class="avatar">H</div>
+          <div>
+            <strong>Home Owner</strong>
+            <small>Personal workspace</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <header class="topbar">
+        <div>
+          <div class="breadcrumb">Workspace / Dashboard</div>
+          <h1>Dashboard</h1>
+        </div>
+
+        <button class="primary-btn" onclick="openModal()">
+          + Add Task
+        </button>
+      </header>
+
+      <section id="dashboard">
+
+        <div class="welcome">
+          <div>
+            <span class="eyebrow">YOUR HOME AT A GLANCE</span>
+            <h2>Welcome back 👋</h2>
+            <p>Here's what's happening with your home maintenance.</p>
+          </div>
+          <div class="welcome-icon">🏡</div>
+        </div>
+
+        <!-- STATISTICS -->
+        <div class="stats-grid">
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Total Tasks</span>
+              <span class="stat-icon blue">▦</span>
+            </div>
+            <h3 id="totalTasks">0</h3>
+            <small>All maintenance tasks</small>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Overdue</span>
+              <span class="stat-icon red">!</span>
+            </div>
+            <h3 id="overdueTasks">0</h3>
+            <small>Needs your attention</small>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Upcoming</span>
+              <span class="stat-icon yellow">◷</span>
+            </div>
+            <h3 id="upcomingTasks">0</h3>
+            <small>Due within 7 days</small>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span>Up to Date</span>
+              <span class="stat-icon green">✓</span>
+            </div>
+            <h3 id="goodTasks">0</h3>
+            <small>Looking good!</small>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- TASKS -->
+      <section id="tasks" class="content-section">
+
+        <div class="section-heading">
+          <div>
+            <h2>Maintenance Tasks</h2>
+            <p>Keep track of everything your home needs.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+
+          <div class="search-box">
+            <span>⌕</span>
+            <input
+              type="search"
+              id="searchInput"
+              placeholder="Search maintenance tasks..."
+            >
+          </div>
+
+          <select id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="HVAC">HVAC</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Safety">Safety</option>
+            <option value="Exterior">Exterior</option>
+            <option value="Appliances">Appliances</option>
+            <option value="Structural">Structural</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="overdue">Overdue</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="good">Up to date</option>
+          </select>
+
+        </div>
+
+        <div class="task-grid" id="taskGrid"></div>
+
+      </section>
+
+      <!-- ACTIVITY -->
+      <section id="activity" class="content-section">
+
+        <div class="section-heading">
+          <div>
+            <h2>Activity Log</h2>
+            <p>Your home maintenance history.</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Category</th>
+                <th>Last Completed</th>
+                <th>Next Due</th>
+                <th>Notes</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <footer>
+        <span>© 2026 HomeKeep</span>
+        <span>Made for better home maintenance.</span>
+      </footer>
+
+    </main>
   </div>
-</header>
 
-<div class="main">
+  <!-- ADD TASK MODAL -->
+  <div class="modal-overlay" id="modalOverlay"
+       onclick="closeModalOutside(event)">
 
-  <div class="section-header">
-    <h2>Maintenance Tasks</h2>
-    <div class="filter-tabs">
-      <button class="tab active" onclick="filterTasks('all', this)">All</button>
-      <button class="tab" onclick="filterTasks('overdue', this)">Overdue</button>
-      <button class="tab" onclick="filterTasks('upcoming', this)">Upcoming</button>
-      <button class="tab" onclick="filterTasks('good', this)">Up to Date</button>
-    </div>
-  </div>
+    <div class="modal" onclick="event.stopPropagation()">
 
-  <div class="task-grid" id="taskGrid"></div>
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">MAINTENANCE MANAGEMENT</span>
+          <h2>Add New Task</h2>
+          <p>Schedule your next home maintenance activity.</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
 
-  <div class="section-header">
-    <h2>Activity Log</h2>
-    <button class="btn btn-ghost" style="font-size:0.8rem">Export CSV</button>
-  </div>
-
-  <div class="log-wrap">
-    <table class="log-table">
-      <thead>
-        <tr>
-          <th>Task</th><th>Category</th><th>Completed</th>
-          <th>Next Due</th><th>Notes</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="logBody"></tbody>
-    </table>
-  </div>
-
-  <div class="section-header"><h2>Maintenance Tips</h2></div>
-  <div class="tips-grid">
-    <div class="tip-card">
-      <div class="tip-icon">🌬️</div>
-      <h4>Change HVAC Filters Every 90 Days</h4>
-      <p>A clogged filter forces your system to work harder, reducing efficiency by up to 15% and shortening unit lifespan.</p>
-    </div>
-    <div class="tip-card">
-      <div class="tip-icon">🔥</div>
-      <h4>Test Smoke Detectors Monthly</h4>
-      <p>Most detector failures occur due to dead batteries or dust buildup. A 30-second monthly test could save your life.</p>
-    </div>
-    <div class="tip-card">
-      <div class="tip-icon">💧</div>
-      <h4>Inspect Water Heater Annually</h4>
-      <p>Flushing sediment buildup annually can extend your water heater's life by up to 5 years and improve efficiency.</p>
-    </div>
-  </div>
-
-</div>
-
-<footer>
-  <p>© 2025 HomeKeep — AWST Project, Home Maintenance Log</p>
-  <p>Built to prevent costly home repairs through proactive tracking.</p>
-</footer>
-
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
-  <div class="modal">
-    <h3>Add Maintenance Task</h3>
-    <p>Track a new recurring maintenance item for your home.</p>
-
-    <div class="form-row">
       <div class="form-group">
         <label>Task Name</label>
-        <input id="taskName" type="text" placeholder="e.g. Replace air filter">
+        <input id="taskName" type="text"
+               placeholder="e.g. Clean air conditioner">
       </div>
-      <div class="form-group">
-        <label>Category</label>
-        <select id="taskCat">
-          <option>HVAC</option><option>Plumbing</option><option>Electrical</option>
-          <option>Safety</option><option>Exterior</option><option>Appliances</option>
-          <option>Structural</option><option>Other</option>
-        </select>
-      </div>
-    </div>
 
-    <div class="form-row">
+      <div class="form-row">
+
+        <div class="form-group">
+          <label>Category</label>
+          <select id="taskCat">
+            <option>HVAC</option>
+            <option>Plumbing</option>
+            <option>Electrical</option>
+            <option>Safety</option>
+            <option>Exterior</option>
+            <option>Appliances</option>
+            <option>Structural</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Frequency</label>
+          <select id="taskFreq">
+            <option value="30">Monthly</option>
+            <option value="90">Every 3 months</option>
+            <option value="180">Every 6 months</option>
+            <option value="365">Annually</option>
+          </select>
+        </div>
+
+      </div>
+
       <div class="form-group">
         <label>Last Completed</label>
         <input id="taskLast" type="date">
       </div>
+
       <div class="form-group">
-        <label>Frequency</label>
-        <select id="taskFreq">
-          <option value="30">Monthly</option>
-          <option value="90">Every 3 months</option>
-          <option value="180">Every 6 months</option>
-          <option value="365">Annually</option>
-        </select>
+        <label>Notes</label>
+        <textarea id="taskNotes"
+          placeholder="Add contractor details, costs, etc."></textarea>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label>Notes (optional)</label>
-      <textarea id="taskNotes" placeholder="Contractor name, product used, cost..."></textarea>
-    </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="closeModal()">
+          Cancel
+        </button>
+        <button class="primary-btn" onclick="addTask()">
+          Save Task
+        </button>
+      </div>
 
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="addTask()">Add Task</button>
     </div>
   </div>
-</div>
 
-<div class="notify-toast" id="toast">
-  <span>✅</span>
-  <span id="toastMsg">Task added successfully!</span>
-</div>
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <span>✓</span>
+    <span id="toastMsg">Task saved successfully.</span>
+  </div>
 
-<script type="module" src="firebase.js"></script>
-<script src="script.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script src="script.js"></script>
+
 </body>
 </html>
