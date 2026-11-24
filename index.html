@@ -203,6 +203,115 @@
 
       </section>
 
+
+      <!-- HOME MAINTENANCE ANALYTICS -->
+      <section id="analytics" class="content-section analytics-section">
+        <div class="section-heading analytics-heading">
+          <div>
+            <span class="eyebrow">DATA-DRIVEN HOME CARE</span>
+            <h2>Maintenance Analytics</h2>
+            <p>A visual overview of your home's maintenance health.</p>
+          </div>
+          <span class="analytics-live"><span></span> Live task data</span>
+        </div>
+
+        <div class="analytics-kpi-grid">
+          <article class="analytics-kpi">
+            <div class="analytics-kpi-icon">✦</div>
+            <span>Maintenance health</span>
+            <strong id="healthScore">—%</strong>
+            <small id="healthLabel">Calculating from task status</small>
+          </article>
+          <article class="analytics-kpi">
+            <div class="analytics-kpi-icon">✓</div>
+            <span>Up-to-date tasks</span>
+            <strong id="healthyCount">0</strong>
+            <small id="healthyPercent">0% of all tasks</small>
+          </article>
+          <article class="analytics-kpi">
+            <div class="analytics-kpi-icon">◷</div>
+            <span>Needs attention</span>
+            <strong id="attentionCount">0</strong>
+            <small>Overdue + due in 7 days</small>
+          </article>
+          <article class="analytics-kpi">
+            <div class="analytics-kpi-icon">▦</div>
+            <span>Categories tracked</span>
+            <strong id="categoryCount">0</strong>
+            <small>Different home areas</small>
+          </article>
+        </div>
+
+        <div class="analytics-main-grid">
+          <article class="analytics-panel">
+            <div class="analytics-panel-heading">
+              <div>
+                <h3>Task status overview</h3>
+                <p>How your maintenance tasks are doing right now</p>
+              </div>
+            </div>
+            <div class="status-chart-layout">
+              <div class="status-donut" id="statusDonut" role="img" aria-label="Task status distribution">
+                <div class="donut-hole">
+                  <strong id="donutTotal">0</strong>
+                  <span>Total tasks</span>
+                </div>
+              </div>
+              <div class="status-legend">
+                <div><span class="legend-dot legend-good"></span><span>Up to date</span><strong id="legendGood">0</strong></div>
+                <div><span class="legend-dot legend-upcoming"></span><span>Upcoming</span><strong id="legendUpcoming">0</strong></div>
+                <div><span class="legend-dot legend-overdue"></span><span>Overdue</span><strong id="legendOverdue">0</strong></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="analytics-panel">
+            <div class="analytics-panel-heading">
+              <div>
+                <h3>Maintenance health score</h3>
+                <p>Based on the share of tasks currently up to date</p>
+              </div>
+            </div>
+            <div class="health-visual">
+              <div class="health-ring" id="healthRing">
+                <div>
+                  <strong id="healthRingValue">0%</strong>
+                  <span>Healthy</span>
+                </div>
+              </div>
+              <div class="health-copy">
+                <strong id="healthMessage">Add tasks to get started</strong>
+                <p id="healthDescription">Your maintenance score will update automatically as tasks become due or are completed.</p>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <article class="analytics-panel category-panel">
+          <div class="analytics-panel-heading">
+            <div>
+              <h3>Tasks by category</h3>
+              <p>See which parts of your home have the most maintenance activity</p>
+            </div>
+          </div>
+          <div id="categoryChart" class="category-chart">
+            <div class="analytics-empty">Add maintenance tasks to see category insights.</div>
+          </div>
+        </article>
+
+        <article class="analytics-panel insights-panel">
+          <div class="analytics-panel-heading">
+            <div>
+              <h3>Maintenance insights</h3>
+              <p>Actionable observations based on your current task list</p>
+            </div>
+          </div>
+          <div id="analyticsInsights" class="insights-grid">
+            <div class="analytics-empty">Insights will appear once you add maintenance tasks.</div>
+          </div>
+        </article>
+      </section>
+
       <footer>
         <span>© 2026 HomeKeep</span>
         <span>Made for better home maintenance.</span>

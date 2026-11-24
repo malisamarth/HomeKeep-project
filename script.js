@@ -348,6 +348,179 @@ function renderLog() {
   });
 }
 
+
+// ==========================================
+// HOME MAINTENANCE ANALYTICS
+// ==========================================
+
+function renderAnalytics() {
+  const total = tasks.length;
+  let overdue = 0;
+  let upcoming = 0;
+  let good = 0;
+  const categoryTotals = {};
+
+  tasks.forEach(task => {
+    const status = getStatus(getDaysUntilDue(task.last, task.freq));
+    if (status === "overdue") overdue++;
+    else if (status === "upcoming") upcoming++;
+    else good++;
+
+    const category = task.cat || "Other";
+    categoryTotals[category] = (categoryTotals[category] || 0) + 1;
+  });
+
+  const health = total ? Math.round((good / total) * 100) : 0;
+  const attention = overdue + upcoming;
+  const categoryEntries = Object.entries(categoryTotals)
+    .sort((a, b) => b[1] - a[1]);
+
+  const setText = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  };
+
+  setText("healthScore", `${health}%`);
+  setText("healthyCount", good);
+  setText("healthyPercent", `${total ? Math.round(good / total * 100) : 0}% of all tasks`);
+  setText("attentionCount", attention);
+  setText("categoryCount", categoryEntries.length);
+  setText("donutTotal", total);
+  setText("legendGood", good);
+  setText("legendUpcoming", upcoming);
+  setText("legendOverdue", overdue);
+  setText("healthRingValue", `${health}%`);
+
+  const donut = document.getElementById("statusDonut");
+  if (donut) {
+    const goodEnd = total ? good / total * 100 : 0;
+    const upcomingEnd = total ? (good + upcoming) / total * 100 : 0;
+    donut.style.background = total
+      ? `conic-gradient(#52c99a 0% ${goodEnd}%, #e9bd68 ${goodEnd}% ${upcomingEnd}%, #f07878 ${upcomingEnd}% 100%)`
+      : "conic-gradient(#303847 0% 100%)";
+  }
+
+  const ring = document.getElementById("healthRing");
+  if (ring) {
+    ring.style.background = `conic-gradient(#52c99a 0% ${health}%, #303847 ${health}% 100%)`;
+  }
+
+  if (!total) {
+    setText("healthLabel", "No tasks yet");
+    setText("healthMessage", "Your home health score starts here");
+    setText("healthDescription", "Add your first maintenance task and HomeKeep will start analyzing its due date and category.");
+  } else if (health >= 80) {
+    setText("healthLabel", "Excellent maintenance");
+    setText("healthMessage", "Your home is in great shape");
+    setText("healthDescription", "Most of your tracked tasks are up to date. Keep following your maintenance schedule.");
+  } else if (health >= 50) {
+    setText("healthLabel", "Some attention needed");
+    setText("healthMessage", "A few tasks need attention");
+    setText("healthDescription", "Review upcoming and overdue tasks to keep your home maintenance on track.");
+  } else {
+    setText("healthLabel", "Needs attention");
+    setText("healthMessage", "Prioritize overdue maintenance");
+    setText("healthDescription", "A large share of your tasks are not currently up to date. Start with overdue items.");
+  }
+
+  const categoryChart = document.getElementById("categoryChart");
+  if (categoryChart) {
+    if (!categoryEntries.length) {
+      categoryChart.innerHTML = '<div class="analytics-empty">Add maintenance tasks to see category insights.</div>';
+    } else {
+      const max = Math.max(...categoryEntries.map(([, count]) => count));
+      categoryChart.innerHTML = categoryEntries.map(([category, count]) => {
+        const percentage = Math.round((count / total) * 100);
+        const width = Math.max(percentage, 3);
+        const safeCategory = escapeHTML(category);
+        return `
+          <div class="category-row">
+            <div class="category-row-top">
+              <span><span class="category-emoji">${ICONS[category] || ICONS.Other}</span>${safeCategory}</span>
+              <strong>${count} <small>(${percentage}%)</small></strong>
+            </div>
+            <div class="category-track"><span style="width:${width}%"></span></div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  const insights = document.getElementById("analyticsInsights");
+  if (insights) {
+    if (!total) {
+      insights.innerHTML = '<div class="analytics-empty">Insights will appear once you add maintenance tasks.</div>';
+    } else {
+      const mostTracked = categoryEntries[0];
+      const overdueTasks = tasks.filter(task =>
+        getStatus(getDaysUntilDue(task.last, task.freq)) === "overdue"
+      );
+      const insightCards = [];
+
+      if (overdue > 0) {
+        insightCards.push({
+          icon: "⚠️",
+          tone: "insight-danger",
+          title: `${overdue} overdue ${overdue === 1 ? "task" : "tasks"}`,
+          body: "These tasks have passed their next due date. Review them first."
+        });
+      } else {
+        insightCards.push({
+          icon: "✓",
+          tone: "insight-positive",
+          title: "No overdue tasks",
+          body: "Great work — none of your tracked tasks are past their due date."
+        });
+      }
+
+      if (upcoming > 0) {
+        insightCards.push({
+          icon: "◷",
+          tone: "insight-warning",
+          title: `${upcoming} coming up soon`,
+          body: "Plan these maintenance activities before their due dates arrive."
+        });
+      }
+
+      if (mostTracked) {
+        insightCards.push({
+          icon: ICONS[mostTracked[0]] || ICONS.Other,
+          tone: "insight-neutral",
+          title: `${mostTracked[0]} is your largest category`,
+          body: `${mostTracked[1]} ${mostTracked[1] === 1 ? "task is" : "tasks are"} recorded in this category.`
+        });
+      }
+
+      if (overdueTasks.length) {
+        const nextPriority = overdueTasks
+          .map(task => ({ name: task.name, days: getDaysUntilDue(task.last, task.freq) }))
+          .sort((a, b) => a.days - b.days)[0];
+        insightCards.push({
+          icon: "↗",
+          tone: "insight-danger",
+          title: "Highest priority",
+          body: `${nextPriority.name} is ${Math.abs(nextPriority.days)} day(s) overdue.`
+        });
+      } else if (health === 100) {
+        insightCards.push({
+          icon: "✦",
+          tone: "insight-positive",
+          title: "All tasks are up to date",
+          body: "Your current task list has no overdue or upcoming maintenance."
+        });
+      }
+
+      insights.innerHTML = insightCards.map(item => `
+        <div class="insight-card ${item.tone}">
+          <span class="insight-icon">${item.icon}</span>
+          <div><strong>${escapeHTML(item.title)}</strong><p>${escapeHTML(item.body)}</p></div>
+        </div>
+      `).join("");
+    }
+  }
+}
+
+
 // ==========================================
 // RENDER ALL
 // ==========================================
@@ -356,6 +529,7 @@ function renderApp() {
   updateDashboard();
   renderTasks();
   renderLog();
+  renderAnalytics();
 }
 
 // ==========================================

@@ -1061,3 +1061,521 @@ select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+
+
+
+/* ==========================================
+   HOMEKEEP — VISUAL ANALYTICS
+========================================== */
+
+.analytics-section {
+  padding-top: 5px;
+}
+
+.analytics-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.analytics-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  background: var(--surface);
+}
+
+.analytics-live span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(82,201,154,.6);
+}
+
+.analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.analytics-kpi,
+.analytics-panel {
+  background: linear-gradient(145deg, #1b222f, #181d27);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 5px 25px rgba(0,0,0,.10);
+}
+
+.analytics-kpi {
+  padding: 19px;
+  min-width: 0;
+}
+
+.analytics-kpi-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(139,156,247,.13);
+  color: var(--accent);
+  margin-bottom: 15px;
+  font-size: 17px;
+}
+
+.analytics-kpi > span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.analytics-kpi > strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 29px;
+  letter-spacing: -1px;
+  margin: 5px 0 2px;
+}
+
+.analytics-kpi > small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.analytics-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.analytics-panel {
+  padding: 22px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.analytics-main-grid .analytics-panel {
+  margin-bottom: 0;
+}
+
+.analytics-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.analytics-panel-heading h3 {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.analytics-panel-heading p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.status-chart-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 22px;
+  min-height: 190px;
+}
+
+.status-donut {
+  width: 170px;
+  height: 170px;
+  flex: 0 0 170px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.donut-hole {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: #1a202b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-hole strong {
+  font: 800 30px 'Manrope', sans-serif;
+}
+
+.donut-hole span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.status-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  flex: 1;
+  min-width: 115px;
+}
+
+.status-legend > div {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.status-legend strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-good { background: #52c99a; }
+.legend-upcoming { background: #e9bd68; }
+.legend-overdue { background: #f07878; }
+
+.health-visual {
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+}
+
+.health-ring {
+  width: 155px;
+  height: 155px;
+  flex: 0 0 155px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.health-ring > div {
+  width: 119px;
+  height: 119px;
+  border-radius: 50%;
+  background: #1a202b;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.health-ring strong {
+  font: 800 29px 'Manrope', sans-serif;
+}
+
+.health-ring span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.health-copy {
+  max-width: 190px;
+}
+
+.health-copy strong {
+  font-size: 13px;
+}
+
+.health-copy p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+
+.category-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.category-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 9px;
+  font-size: 11px;
+}
+
+.category-row-top > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.category-emoji {
+  font-size: 15px;
+}
+
+.category-row-top strong {
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.category-row-top strong small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.category-track {
+  height: 9px;
+  background: #2a3240;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.category-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7185ec, #a4adff);
+  transition: width .6s ease;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.018);
+  border-radius: 11px;
+}
+
+.insight-icon {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(139,156,247,.12);
+  font-size: 14px;
+}
+
+.insight-card strong {
+  display: block;
+  font-size: 11px;
+  margin: 2px 0 5px;
+}
+
+.insight-card p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.insight-danger .insight-icon { background: rgba(240,120,120,.13); }
+.insight-warning .insight-icon { background: rgba(233,189,104,.13); }
+.insight-positive .insight-icon { background: rgba(82,201,154,.13); }
+
+.analytics-empty {
+  width: 100%;
+  padding: 25px 15px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+@media (max-width: 1100px) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .analytics-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .health-visual {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-kpi-grid {
+    gap: 9px;
+  }
+
+  .analytics-kpi {
+    padding: 14px;
+  }
+
+  .analytics-kpi > strong {
+    font-size: 24px;
+  }
+
+  .analytics-panel {
+    padding: 16px;
+  }
+
+  .status-chart-layout {
+    flex-direction: column;
+    padding: 5px 0;
+  }
+
+  .status-legend {
+    width: 100%;
+  }
+
+  .health-visual {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+/* ==========================================
+   HOMEKEEP — SLIGHTLY LARGER TYPOGRAPHY
+========================================== */
+
+body {
+  font-size: 15px;
+}
+
+.nav-item {
+  font-size: 15px;
+}
+
+.sidebar-label {
+  font-size: 11px;
+}
+
+.help-card strong,
+.profile strong {
+  font-size: 13px;
+}
+
+.help-card p {
+  font-size: 12px;
+}
+
+.profile small {
+  font-size: 11px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+}
+
+.welcome p,
+.section-heading p,
+.modal-header p {
+  font-size: 14px;
+}
+
+.eyebrow {
+  font-size: 11px;
+}
+
+.stat-top {
+  font-size: 13px;
+}
+
+.stat-card small {
+  font-size: 12px;
+}
+
+.toolbar select,
+.search-box input,
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-size: 13px;
+}
+
+.task-desc,
+.task-meta,
+.task-actions button {
+  font-size: 12px;
+}
+
+.status-pill {
+  font-size: 11px;
+}
+
+.activity-table th {
+  font-size: 11px;
+}
+
+.activity-table td {
+  font-size: 12px;
+}
+
+.form-group label {
+  font-size: 12px;
+}
+
+.analytics-kpi > span,
+.analytics-kpi > small,
+.analytics-panel-heading p,
+.donut-hole span,
+.status-legend > div,
+.health-ring span,
+.health-copy p,
+.category-row-top,
+.insight-card strong,
+.insight-card p,
+.analytics-empty {
+  font-size: 12px;
+}
+
+.analytics-kpi > strong {
+  font-size: 31px;
+}
+
+.analytics-panel-heading h3 {
+  font-size: 15px;
+}
+
+.category-row-top strong {
+  font-size: 12px;
+}
+
